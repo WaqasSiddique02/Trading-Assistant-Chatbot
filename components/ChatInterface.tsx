@@ -8,7 +8,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Message } from './Message';
 import { LoadingMessage } from './LoadingMessage';
 import { HistorySidebar } from './HistorySidebar';
-import { Send, Bot } from 'lucide-react';
+import { Send, Bot, Mic, MicOff } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 interface MessageType {
@@ -41,7 +41,9 @@ export function ChatInterface() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     // Get or create session ID
@@ -162,6 +164,53 @@ export function ChatInterface() {
     }
   };
 
+  const initializeSpeechRecognition = () => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInput(transcript);
+          setIsRecording(false);
+        };
+
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          setIsRecording(false);
+        };
+
+        recognition.onend = () => {
+          setIsRecording(false);
+        };
+
+        recognitionRef.current = recognition;
+      }
+    }
+  };
+
+  const toggleVoiceInput = () => {
+    if (!recognitionRef.current) {
+      initializeSpeechRecognition();
+    }
+
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+    } else {
+      try {
+        recognitionRef.current?.start();
+        setIsRecording(true);
+      } catch (error) {
+        console.error('Error starting speech recognition:', error);
+      }
+    }
+  };
+
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
       {/* History Sidebar */}
@@ -245,10 +294,22 @@ export function ChatInterface() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask about crypto markets, trading strategies..."
-                disabled={isLoading}
+                placeholder={isRecording ? "Listening..." : "Ask about crypto markets, trading strategies..."}
+                disabled={isLoading || isRecording}
                 className="flex-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700"
               />
+              <Button
+                onClick={toggleVoiceInput}
+                disabled={isLoading}
+                className={`${
+                  isRecording 
+                    ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
+                    : 'bg-slate-600 hover:bg-slate-700'
+                } text-white`}
+                title={isRecording ? "Stop recording" : "Start voice input"}
+              >
+                {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </Button>
               <Button
                 onClick={handleSend}
                 disabled={!input.trim() || isLoading}
@@ -258,7 +319,9 @@ export function ChatInterface() {
               </Button>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center">
-              Press Enter to send • Shift+Enter for new line
+              {isRecording 
+                ? '🎤 Recording... Speak now'
+                : 'Press Enter to send • Click mic for voice input'}
             </p>
           </div>
         </div>
