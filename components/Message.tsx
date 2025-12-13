@@ -68,12 +68,12 @@ export function Message({ role, content, timestamp, context, marketData, graphDa
           </p>
         </Card>
 
-        {!isUser && marketData && (
-          <MarketChart marketData={marketData} />
-        )}
-
         {!isUser && graphData && (
           <TradingChart graphData={graphData} />
+        )}
+
+        {!isUser && !graphData && marketData && (
+          <MarketChart marketData={marketData} />
         )}
 
         {!isUser && context && context.length > 0 && (

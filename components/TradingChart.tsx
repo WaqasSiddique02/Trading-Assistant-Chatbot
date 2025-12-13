@@ -141,7 +141,7 @@ export function TradingChart({ graphData }: TradingChartProps) {
         <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{description}</p>
       </CardHeader>
       <CardContent>
-        <div className="h-[400px] w-full">
+        <div className="h-100 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
               <defs>
