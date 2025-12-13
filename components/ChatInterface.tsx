@@ -28,6 +28,12 @@ interface MessageType {
       timestamp: string;
     };
   };
+  graphData?: {
+    data: any[];
+    type: string;
+    title: string;
+    description: string;
+  };
 }
 
 export function ChatInterface() {
@@ -103,6 +109,7 @@ export function ChatInterface() {
           timestamp: new Date(),
           context: data.response.context,
           marketData: data.response.market_data,
+          graphData: data.response.graph_data,
         };
 
         setMessages((prev) => [...prev, assistantMessage]);

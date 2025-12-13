@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Bot, User, Clock, Info } from 'lucide-react';
 import { MarketChart } from './MarketChart';
+import { TradingChart } from './TradingChart';
 import { format } from 'date-fns';
 import { Separator } from './ui/separator';
 
@@ -25,9 +26,15 @@ interface MessageProps {
       timestamp: string;
     };
   };
+  graphData?: {
+    data: any[];
+    type: string;
+    title: string;
+    description: string;
+  };
 }
 
-export function Message({ role, content, timestamp, context, marketData }: MessageProps) {
+export function Message({ role, content, timestamp, context, marketData, graphData }: MessageProps) {
   const isUser = role === 'user';
 
   return (
@@ -63,6 +70,10 @@ export function Message({ role, content, timestamp, context, marketData }: Messa
 
         {!isUser && marketData && (
           <MarketChart marketData={marketData} />
+        )}
+
+        {!isUser && graphData && (
+          <TradingChart graphData={graphData} />
         )}
 
         {!isUser && context && context.length > 0 && (
