@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 180000, // 3 minute timeout for long-running queries (fetching market data, news, etc.)
+        timeout: 240000, // 4 minute timeout (matches backend LLM timeout)
       }
     );
 
@@ -56,20 +56,31 @@ export async function POST(request: NextRequest) {
 
     const botResponse = response.data;
 
-    // Add assistant message
+    // Validate response structure
+    if (!botResponse || !botResponse.answer) {
+      throw new Error('Invalid response from backend');
+    }
+
+    // Add assistant message - ONLY store essential data, not context/marketData/graphData
+    // These are large and don't need persistence (they're regenerated on each query)
     chatSession.messages.push({
       role: 'assistant',
       content: botResponse.answer,
       timestamp: new Date(),
-      context: botResponse.context,
-      marketData: botResponse.market_data,
     });
 
     await chatSession.save();
 
     return NextResponse.json({
       success: true,
-      response: botResponse,
+      response: {
+        answer: botResponse.answer,
+        context: botResponse.context || [],
+        market_data: botResponse.market_data,
+        graph_data: botResponse.graph_data,
+        status: botResponse.status || 'success',
+        timestamp: botResponse.timestamp,
+      },
     });
   } catch (error) {
     console.error('Chat API Error:', error);
@@ -87,12 +98,13 @@ export async function POST(request: NextRequest) {
       if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
         return NextResponse.json(
           { 
+            success: false,
             error: 'Request timeout',
-            details: 'The backend is taking longer than expected to process your request. This usually happens when:\n' +
-                    '1. Fetching real-time market data\n' +
-                    '2. Analyzing large amounts of news data\n' +
-                    '3. Processing complex queries\n\n' +
-                    'Please try again, or check if your backend is running properly.',
+            details: 'The AI model took longer than 4 minutes to respond. This can happen with:\n' +
+                    '• Complex market analysis requests\n' +
+                    '• Heavy backtest queries\n' +
+                    '• Multiple data sources being analyzed\n\n' +
+                    'Try simplifying your question or ask again.',
             timeout: true
           },
           { status: 504 }
@@ -101,6 +113,7 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json(
         { 
+          success: false,
           error: 'Failed to process chat message',
           details: error.response?.data || error.message,
           status: error.response?.status,
@@ -111,7 +124,11 @@ export async function POST(request: NextRequest) {
     }
     
     return NextResponse.json(
-      { error: 'Failed to process chat message', details: error instanceof Error ? error.message : 'Unknown error' },
+      { 
+        success: false,
+        error: 'Failed to process chat message', 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      },
       { status: 500 }
     );
   }

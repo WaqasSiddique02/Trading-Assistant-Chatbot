@@ -42,6 +42,7 @@ export function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
@@ -64,6 +65,27 @@ export function ChatInterface() {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    // Check backend health
+    const checkBackendHealth = async () => {
+      try {
+        const response = await fetch('/api/health');
+        if (response.ok) {
+          setBackendStatus('online');
+        } else {
+          setBackendStatus('offline');
+        }
+      } catch (error) {
+        setBackendStatus('offline');
+      }
+    };
+
+    checkBackendHealth();
+    const interval = setInterval(checkBackendHealth, 30000); // Check every 30s
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const loadHistory = async (sid: string) => {
     try {
@@ -103,21 +125,31 @@ export function ChatInterface() {
       });
 
       const data = await response.json();
+      console.log('API Response:', data);
 
-      if (data.success) {
-        const assistantMessage: MessageType = {
-          role: 'assistant',
-          content: data.response.answer,
-          timestamp: new Date(),
-          context: data.response.context,
-          marketData: data.response.market_data,
-          graphData: data.response.graph_data,
-        };
-
-        setMessages((prev) => [...prev, assistantMessage]);
-      } else {
-        throw new Error(data.error || 'Failed to get response');
+      // More explicit error checking
+      if (!data.success || !data.response) {
+        const errorDetails = data.details || data.error || 'Failed to get response';
+        const isTimeout = data.timeout || false;
+        
+        throw new Error(
+          isTimeout 
+            ? `⏱️ ${errorDetails}` 
+            : `❌ ${errorDetails}`
+        );
       }
+
+      // Success case
+      const assistantMessage: MessageType = {
+        role: 'assistant',
+        content: data.response.answer,
+        timestamp: new Date(),
+        context: data.response.context || [],
+        marketData: data.response.market_data || undefined,
+        graphData: data.response.graph_data || undefined,
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Frontend error details:', error);
       
@@ -226,11 +258,18 @@ export function ChatInterface() {
                 <Bot className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   Trading Bot Assistant
+                  <span className={`h-2 w-2 rounded-full ${
+                    backendStatus === 'online' ? 'bg-green-500' : 
+                    backendStatus === 'offline' ? 'bg-red-500' : 
+                    'bg-yellow-500 animate-pulse'
+                  }`} />
                 </h1>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  AI-powered crypto trading insights
+                  {backendStatus === 'online' ? '🟢 Connected - AI-powered crypto trading insights' : 
+                   backendStatus === 'offline' ? '🔴 Disconnected - Please start backend server' : 
+                   '🟡 Connecting...'}
                 </p>
               </div>
             </div>
