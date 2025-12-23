@@ -63,18 +63,44 @@ export async function POST(request: NextRequest) {
     const botResponse = response.data;
 
     // Validate response structure
-    if (!botResponse || !botResponse.answer) {
-      throw new Error('Invalid response from backend');
+    if (!botResponse) {
+      console.error('No response data from backend');
+      throw new Error('Invalid response from backend: No data received');
     }
+    
+    if (!botResponse.answer) {
+      console.error('Backend response missing answer field:', botResponse);
+      throw new Error('Invalid response from backend: Missing answer field');
+    }
+
+    // Sanitize data to remove Infinity values which break JSON
+    const sanitizeData = (obj: any): any => {
+      if (obj === null || obj === undefined) return obj;
+      if (typeof obj === 'number') {
+        if (!isFinite(obj)) return null;
+        return obj;
+      }
+      if (Array.isArray(obj)) {
+        return obj.map(sanitizeData);
+      }
+      if (typeof obj === 'object') {
+        const sanitized: any = {};
+        for (const key in obj) {
+          sanitized[key] = sanitizeData(obj[key]);
+        }
+        return sanitized;
+      }
+      return obj;
+    };
 
     // Add assistant message with all data including graphs for persistence
     chatSession.messages.push({
       role: 'assistant',
       content: botResponse.answer,
       timestamp: new Date(),
-      context: botResponse.context || [],
-      marketData: botResponse.market_data,
-      graphData: botResponse.graph_data,
+      context: sanitizeData(botResponse.context || []),
+      marketData: sanitizeData(botResponse.market_data),
+      graphData: sanitizeData(botResponse.graph_data),
     });
 
     await chatSession.save();
