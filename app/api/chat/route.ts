@@ -47,12 +47,18 @@ export async function POST(request: NextRequest) {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 240000, // 4 minute timeout (matches backend LLM timeout)
+        timeout: 300000, // 5 minute timeout (matches backend LLM timeout)
       }
     );
 
     console.log('Backend response status:', response.status);
     console.log('Backend response data:', response.data);
+    
+    // Log graph data structure for debugging
+    if (response.data.graph_data?.data) {
+      console.log('Graph data array length:', response.data.graph_data.data.length);
+      console.log('First 3 graph data items:', JSON.stringify(response.data.graph_data.data.slice(0, 3), null, 2));
+    }
 
     const botResponse = response.data;
 
@@ -61,12 +67,14 @@ export async function POST(request: NextRequest) {
       throw new Error('Invalid response from backend');
     }
 
-    // Add assistant message - ONLY store essential data, not context/marketData/graphData
-    // These are large and don't need persistence (they're regenerated on each query)
+    // Add assistant message with all data including graphs for persistence
     chatSession.messages.push({
       role: 'assistant',
       content: botResponse.answer,
       timestamp: new Date(),
+      context: botResponse.context || [],
+      marketData: botResponse.market_data,
+      graphData: botResponse.graph_data,
     });
 
     await chatSession.save();

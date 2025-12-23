@@ -4,7 +4,25 @@ export interface IMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  // Removed: context, marketData, graphData (these are large and don't need persistence)
+  context?: string[];
+  marketData?: {
+    BTCUSDT?: {
+      price: string;
+      symbol: string;
+      timestamp: string;
+    };
+    ETHUSDT?: {
+      price: string;
+      symbol: string;
+      timestamp: string;
+    };
+  };
+  graphData?: {
+    data: any[];
+    type: string;
+    title: string;
+    description: string;
+  };
 }
 
 export interface IChatSession {
@@ -28,7 +46,18 @@ const MessageSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  // Removed: context, marketData, graphData - reduces document size by ~80%
+  context: {
+    type: [String],
+    required: false,
+  },
+  marketData: {
+    type: mongoose.Schema.Types.Mixed,
+    required: false,
+  },
+  graphData: {
+    type: mongoose.Schema.Types.Mixed,
+    required: false,
+  },
 });
 
 const ChatSessionSchema = new mongoose.Schema({

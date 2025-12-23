@@ -32,21 +32,39 @@ interface TradingChartProps {
 
 // Bar Chart Component
 function BarChartComponent({ data }: any) {
+  console.log('BarChartComponent received data:', data);
+  console.log('First data item:', data[0]);
+  
+  // Try to detect the correct field names
+  const sampleItem = data[0] || {};
+  const labelKey = sampleItem.label !== undefined ? 'label' : 
+                   sampleItem.time !== undefined ? 'time' :
+                   sampleItem.hour !== undefined ? 'hour' :
+                   sampleItem.date !== undefined ? 'date' : 'label';
+  
+  const valueKey = sampleItem.value !== undefined ? 'value' :
+                   sampleItem.volume !== undefined ? 'volume' :
+                   sampleItem.count !== undefined ? 'count' :
+                   sampleItem.price !== undefined ? 'price' : 'value';
+  
+  console.log('Using labelKey:', labelKey, 'valueKey:', valueKey);
+  
   return (
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey="label" stroke="#6b7280" fontSize={11} />
+          <XAxis dataKey={labelKey} stroke="#6b7280" fontSize={11} angle={-45} textAnchor="end" height={80} />
           <YAxis stroke="#6b7280" fontSize={11} />
           <Tooltip 
             contentStyle={{ 
               backgroundColor: '#fff', 
               border: '1px solid #e5e7eb',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              color: '#0f172a'
             }} 
           />
-          <Bar dataKey="value" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
+          <Bar dataKey={valueKey} fill="#2563eb" radius={[8, 8, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -55,26 +73,47 @@ function BarChartComponent({ data }: any) {
 
 // Line Chart Component
 function LineChartComponent({ data }: any) {
+  console.log('LineChartComponent received data:', data);
+  console.log('First data item:', data[0]);
+  
+  // Try to detect the correct field names
+  const sampleItem = data[0] || {};
+  const labelKey = sampleItem.label !== undefined ? 'label' : 
+                   sampleItem.time !== undefined ? 'time' :
+                   sampleItem.date !== undefined ? 'date' :
+                   sampleItem.timestamp !== undefined ? 'timestamp' :
+                   sampleItem.hour !== undefined ? 'hour' :
+                   sampleItem.index !== undefined ? 'index' : 'label';
+  
+  const valueKey = sampleItem.value !== undefined ? 'value' :
+                   sampleItem.equity !== undefined ? 'equity' :
+                   sampleItem.balance !== undefined ? 'balance' :
+                   sampleItem.price !== undefined ? 'price' :
+                   sampleItem.amount !== undefined ? 'amount' : 'value';
+  
+  console.log('Using labelKey:', labelKey, 'valueKey:', valueKey);
+  
   return (
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey="label" stroke="#6b7280" fontSize={11} />
+          <XAxis dataKey={labelKey} stroke="#6b7280" fontSize={11} angle={-45} textAnchor="end" height={80} />
           <YAxis stroke="#6b7280" fontSize={11} />
           <Tooltip
             contentStyle={{ 
               backgroundColor: '#fff', 
               border: '1px solid #e5e7eb',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              color: '#0f172a'
             }}
           />
           <Line 
             type="monotone" 
-            dataKey="value" 
-            stroke="#8b5cf6" 
+            dataKey={valueKey} 
+            stroke="#2563eb" 
             strokeWidth={2}
-            dot={{ fill: '#8b5cf6', r: 4 }}
+            dot={{ fill: '#2563eb', r: 4 }}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -90,10 +129,10 @@ function GaugeChartComponent({ data }: any) {
   return (
     <div className="h-80 w-full flex items-center justify-center">
       <div className="text-center">
-        <p className="text-6xl font-bold text-purple-600">{formatted}</p>
-        <p className="text-lg text-slate-600 dark:text-slate-400 mt-4">{data[0]?.label}</p>
+        <p className="text-6xl font-bold text-blue-600">{formatted}</p>
+        <p className="text-lg text-gray-700 mt-4">{data[0]?.label}</p>
         {data[0]?.timestamp && (
-          <p className="text-sm text-slate-500 dark:text-slate-500 mt-2">
+          <p className="text-sm text-gray-500 mt-2">
             {new Date(data[0].timestamp).toLocaleString()}
           </p>
         )}
@@ -297,11 +336,15 @@ function CandlestickChartComponent({ data }: any) {
 }
 
 export function TradingChart({ graphData }: TradingChartProps) {
+  console.log('TradingChart received graphData:', graphData);
+  
   if (!graphData || !graphData.data || graphData.data.length === 0) {
+    console.log('TradingChart: No data to display');
     return null;
   }
 
   const { data, title, description, type } = graphData;
+  console.log('TradingChart data length:', data.length, 'type:', type);
 
   // Render different chart types based on 'type'
   const renderChart = () => {
@@ -325,13 +368,13 @@ export function TradingChart({ graphData }: TradingChartProps) {
   };
 
   return (
-    <Card className="mt-3 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+    <Card className="mt-3 bg-white border-gray-200 w-full shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-blue-600" />
-          {title}
+          <span className="text-gray-900">{title}</span>
         </CardTitle>
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{description}</p>
+        <p className="text-xs text-gray-600 mt-1">{description}</p>
       </CardHeader>
       <CardContent>
         {renderChart()}

@@ -30,7 +30,7 @@ interface MessageType {
   };
   graphData?: {
     data: any[];
-    type: string;
+    type: "area" | "line" | "candle" | "bar" | "gauge";
     title: string;
     description: string;
   };
@@ -244,32 +244,32 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* History Sidebar */}
       <HistorySidebar messages={messages} onClearHistory={handleClearHistory} />
 
       {/* Main Chat Area */}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 min-w-0 h-screen overflow-hidden">
         {/* Header */}
-        <header className="border-b bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-          <div className="px-6 py-4">
+        <header className="border-b bg-white border-gray-200 shrink-0">
+          <div className="px-4 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
-                <Bot className="h-6 w-6 text-white" />
+              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+                <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  Trading Bot Assistant
-                  <span className={`h-2 w-2 rounded-full ${
+              <div className="min-w-0 flex-1">
+                <h1 className="text-base sm:text-xl font-bold text-gray-900 flex items-center gap-2 truncate">
+                  Trading Bot
+                  <span className={`h-2 w-2 rounded-full shrink-0 ${
                     backendStatus === 'online' ? 'bg-green-500' : 
                     backendStatus === 'offline' ? 'bg-red-500' : 
                     'bg-yellow-500 animate-pulse'
                   }`} />
                 </h1>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  {backendStatus === 'online' ? '🟢 Connected - AI-powered crypto trading insights' : 
-                   backendStatus === 'offline' ? '🔴 Disconnected - Please start backend server' : 
-                   '🟡 Connecting...'}
+                <p className="text-xs text-gray-600 truncate">
+                  {backendStatus === 'online' ? 'Connected' : 
+                   backendStatus === 'offline' ? 'Disconnected' : 
+                   'Connecting...'}
                 </p>
               </div>
             </div>
@@ -277,91 +277,93 @@ export function ChatInterface() {
         </header>
 
         {/* Messages */}
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="px-6 py-6">
-              {messages.length === 0 ? (
-                <Card className="p-8 text-center bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                  <Bot className="h-16 w-16 mx-auto mb-4 text-slate-400" />
-                  <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                    Welcome to Trading Bot Assistant
+        <div className="flex-1 overflow-y-auto">
+          <div className="px-3 sm:px-4 md:px-6 py-4 sm:py-6">
+            {messages.length === 0 ? (
+              <div className="max-w-4xl mx-auto">
+                <Card className="p-6 sm:p-8 text-center bg-white border-gray-200 shadow-sm">
+                  <Bot className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 text-blue-600" />
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
+                    Trading Bot Assistant
                   </h2>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    Ask me anything about cryptocurrency markets, trading strategies, or get real-time market insights!
+                  <p className="text-sm sm:text-base text-gray-600 mb-6">
+                    Ask me about cryptocurrency markets, trading strategies, or real-time insights
                   </p>
-                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3 text-left">
-                    <Card className="p-3 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-                      <p className="text-sm text-blue-900 dark:text-blue-100">
-                        💡 "What's the current price of BTC?"
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-left">
+                    <Card className="p-3 bg-blue-50 border-blue-100 hover:border-blue-300 transition-colors">
+                      <p className="text-xs sm:text-sm text-gray-700">
+                        💡 "What's the current BTC price?"
                       </p>
                     </Card>
-                    <Card className="p-3 bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
-                      <p className="text-sm text-purple-900 dark:text-purple-100">
-                        📈 "Should I buy or sell ETH?"
+                    <Card className="p-3 bg-blue-50 border-blue-100 hover:border-blue-300 transition-colors">
+                      <p className="text-xs sm:text-sm text-gray-700">
+                        📈 "Show me trading volume"
                       </p>
                     </Card>
-                    <Card className="p-3 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
-                      <p className="text-sm text-green-900 dark:text-green-100">
-                        📊 "Show me market trends"
+                    <Card className="p-3 bg-blue-50 border-blue-100 hover:border-blue-300 transition-colors">
+                      <p className="text-xs sm:text-sm text-gray-700">
+                        📊 "Market trends analysis"
                       </p>
                     </Card>
-                    <Card className="p-3 bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800">
-                      <p className="text-sm text-orange-900 dark:text-orange-100">
-                        📰 "Latest crypto news?"
+                    <Card className="p-3 bg-blue-50 border-blue-100 hover:border-blue-300 transition-colors">
+                      <p className="text-xs sm:text-sm text-gray-700">
+                        💰 "Best trading strategies"
                       </p>
                     </Card>
                   </div>
                 </Card>
-              ) : (
-                <div className="space-y-4">
-                  {messages.map((msg, idx) => (
-                    <Message key={idx} {...msg} />
-                  ))}
-                  {isLoading && <LoadingMessage />}
-                  <div ref={scrollRef} />
-                </div>
-              )}
-            </div>
-          </ScrollArea>
+              </div>
+            ) : (
+              <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
+                {messages.map((msg, idx) => (
+                  <Message key={idx} {...msg} />
+                ))}
+                {isLoading && <LoadingMessage />}
+                <div ref={scrollRef} />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Input */}
-        <div className="border-t bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-          <div className="px-6 py-4">
-            <div className="flex gap-2">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder={isRecording ? "Listening..." : "Ask about crypto markets, trading strategies..."}
-                disabled={isLoading || isRecording}
-                className="flex-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700"
-              />
-              <Button
-                onClick={toggleVoiceInput}
-                disabled={isLoading}
-                className={`${
-                  isRecording 
-                    ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
-                    : 'bg-slate-600 hover:bg-slate-700'
-                } text-white`}
-                title={isRecording ? "Stop recording" : "Start voice input"}
-              >
-                {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              </Button>
-              <Button
-                onClick={handleSend}
-                disabled={!input.trim() || isLoading}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+        <div className="border-t bg-white border-gray-200 shrink-0">
+          <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+            <div className="max-w-5xl mx-auto">
+              <div className="flex gap-2">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder={isRecording ? "Listening..." : "Ask about crypto markets..."}
+                  disabled={isLoading || isRecording}
+                  className="flex-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base"
+                />
+                <Button
+                  onClick={toggleVoiceInput}
+                  disabled={isLoading}
+                  className={`shrink-0 ${
+                    isRecording 
+                      ? 'bg-red-600 hover:bg-red-700 animate-pulse' 
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  } border-0`}
+                  title={isRecording ? "Stop recording" : "Start voice input"}
+                >
+                  {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </Button>
+                <Button
+                  onClick={handleSend}
+                  disabled={!input.trim() || isLoading}
+                  className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:text-gray-500"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2 text-center hidden sm:block">
+                {isRecording 
+                  ? '🎤 Recording... Speak now'
+                  : 'Press Enter to send'}
+              </p>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-center">
-              {isRecording 
-                ? '🎤 Recording... Speak now'
-                : 'Press Enter to send • Click mic for voice input'}
-            </p>
           </div>
         </div>
       </div>
